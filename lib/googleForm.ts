@@ -1,66 +1,40 @@
-import type { SurveyAnswers } from "@/types/survey";
+import { getSurveyBranch, getSurveySteps } from "@/lib/survey";
+import type { SurveyAnswers, SurveyStepId } from "@/types/survey";
 
-const GOOGLE_FORM_ENV_KEYS = [
-  "GOOGLE_FORM_ACTION_URL",
-  "GOOGLE_FORM_ENTRY_SEX",
-  "GOOGLE_FORM_ENTRY_AGE_RANGE",
-  "GOOGLE_FORM_ENTRY_CURRENT_USE",
-  "GOOGLE_FORM_ENTRY_REASON",
-  "GOOGLE_FORM_ENTRY_INCONVENIENCE",
-  "GOOGLE_FORM_ENTRY_WILLINGNESS",
-] as const;
+const GOOGLE_FORM_ACTION_URL =
+  "https://docs.google.com/forms/d/e/1FAIpQLSd3q1b_6xB2aBzd42yrf4hLrZTD9ceceRDZH5NbsuXMCUIhVA/formResponse";
 
-type GoogleFormEnvKey = (typeof GOOGLE_FORM_ENV_KEYS)[number];
-
-type GoogleFormConfig = Record<GoogleFormEnvKey, string>;
-
-export class GoogleFormConfigurationError extends Error {
-  constructor(missingKeys: string[]) {
-    super(`Google Form environment variables are missing or still placeholders: ${missingKeys.join(", ")}`);
-    this.name = "GoogleFormConfigurationError";
-  }
-}
-
-function isConfiguredValue(key: GoogleFormEnvKey, value: string | undefined) {
-  if (!value) {
-    return false;
-  }
-
-  if (key === "GOOGLE_FORM_ACTION_URL") {
-    return value.startsWith("https://docs.google.com/forms/") && !value.includes("FORM_ID");
-  }
-
-  return value.startsWith("entry.") && !value.includes("xxxxxxxxxx");
-}
-
-function getGoogleFormConfig(): GoogleFormConfig {
-  const missingKeys = GOOGLE_FORM_ENV_KEYS.filter((key) => !isConfiguredValue(key, process.env[key]));
-
-  if (missingKeys.length > 0) {
-    throw new GoogleFormConfigurationError(missingKeys);
-  }
-
-  return GOOGLE_FORM_ENV_KEYS.reduce((config, key) => {
-    config[key] = process.env[key] as string;
-    return config;
-  }, {} as GoogleFormConfig);
-}
+const GOOGLE_FORM_ENTRIES = {
+  petType: "entry.2116723398",
+  purchasePlace: "entry.741415276",
+  productType: "entry.1248074905",
+  willingness: "entry.1368871348",
+  probioticUse: "entry.1015391778",
+  probioticType: "entry.423693412",
+  probioticWillingness: "entry.1668063766",
+} as const satisfies Record<SurveyStepId, string>;
 
 export async function submitToGoogleForm(answers: SurveyAnswers) {
-  const config = getGoogleFormConfig();
   const formData = new URLSearchParams();
 
-  formData.append(config.GOOGLE_FORM_ENTRY_SEX, answers.sex);
-  formData.append(config.GOOGLE_FORM_ENTRY_AGE_RANGE, answers.ageRange);
-  formData.append(config.GOOGLE_FORM_ENTRY_CURRENT_USE, answers.currentUse);
-  formData.append(config.GOOGLE_FORM_ENTRY_INCONVENIENCE, answers.inconvenience);
-  formData.append(config.GOOGLE_FORM_ENTRY_WILLINGNESS, answers.willingness);
+  for (const step of getSurveySteps(answers)) {
+    const answer = answers[step.id];
+    const choice = step.choices.find((candidate) => candidate.value === answer);
 
-  for (const reason of answers.reasons) {
-    formData.append(config.GOOGLE_FORM_ENTRY_REASON, reason);
+    if (!choice) {
+      throw new Error(`Invalid answer for ${step.id}`);
+    }
+
+    formData.append(GOOGLE_FORM_ENTRIES[step.id], choice.formValue);
   }
 
-  const response = await fetch(config.GOOGLE_FORM_ACTION_URL, {
+  formData.append("fvv", "1");
+  formData.append(
+    "pageHistory",
+    getSurveyBranch(answers) === "probiotic" ? "0,2" : "0,1,2",
+  );
+
+  const response = await fetch(GOOGLE_FORM_ACTION_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",

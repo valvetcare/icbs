@@ -13,6 +13,8 @@
 
 html {
   background: #eef7ff;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -34,4 +36,76 @@ button:focus-visible,
 input:focus-visible {
   outline: 3px solid rgba(103, 168, 242, 0.42);
   outline-offset: 3px;
+}
+
+@media (max-height: 640px) {
+  .completion-layout > div {
+    padding-top: 8px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+
+  .completion-layout header > img {
+    width: 88px;
+  }
+
+  .completion-layout header h1 {
+    margin-top: 4px;
+    font-size: 18px;
+  }
+
+  .completion-layout header p {
+    margin-top: 2px;
+    font-size: 12px;
+  }
+
+  .completion-layout header + div {
+    margin-top: 8px;
+  }
+
+  .completion-screen {
+    margin-top: 8px;
+    gap: 8px;
+  }
+
+  .completion-actions a {
+    min-height: 44px;
+    padding-block: 8px;
+  }
+
+  .completion-reward {
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .completion-reward img {
+    width: 24px;
+    height: 24px;
+  }
+
+  .completion-reward p {
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .completion-confirmation {
+    padding: 10px;
+  }
+
+  .completion-confirmation > div {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .completion-pets {
+    max-width: 80px;
+  }
+
+  .completion-benefits > div {
+    padding-block: 8px;
+  }
+
+  .completion-benefits > div > div {
+    width: 28px;
+    height: 28px;
+  }
 }

@@ -1,12 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { Check, Gift, HeartPulse, Pipette, RotateCcw, ShieldCheck, Sparkles } from "lucide-react";
+import { Check, ExternalLink, HeartPulse, MessageCircle, Pipette, Sparkles, UserRoundPlus } from "lucide-react";
 import { SurveyLayout } from "@/components/SurveyLayout";
 
-type CompletionScreenProps = {
-  onReset: () => void;
-};
+const KAKAO_COUPON_URL =
+  process.env.NEXT_PUBLIC_KAKAO_COUPON_URL?.trim() || "https://pf.kakao.com/_fJZab/coupons/_Qukjo45n";
+const WELCARE_MALL_SIGNUP_URL = "https://www.welcaremall.com/member/login.html#none";
 
 const benefitCards = [
   { label: "구충 관리", Icon: HeartPulse },
@@ -14,54 +14,61 @@ const benefitCards = [
   { label: "5일치 체험팩", Icon: Sparkles },
 ];
 
-export function CompletionScreen({ onReset }: CompletionScreenProps) {
+export function CompletionScreen() {
   return (
     <SurveyLayout
       progress={100}
       title="참여해 주셔서 감사합니다 :)"
       subtitle="아래 사은품 안내를 확인해 주세요!"
+      compactHeader
     >
-      <section className="mt-8 space-y-5">
-        <div className="mx-auto flex w-fit items-center gap-3 rounded-[22px] border border-[#D6E9FF] bg-[#F3F9FF] px-5 py-4 text-lg font-black text-[#4D8CDC] shadow-soft">
-          <Gift className="size-8 text-[#F4A942]" aria-hidden="true" />
-          사은품 안내
+      <section className="completion-screen mt-3 grid gap-2.5">
+        <div className="completion-actions grid gap-2">
+          <a
+            href={KAKAO_COUPON_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-[18px] border border-[#F7DF7C] bg-[#FFE75A] px-3 py-2.5 text-sm font-black text-[#2B2110] shadow-soft transition hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#67A8F2] min-[360px]:text-[15px]"
+          >
+            <MessageCircle className="size-5 shrink-0" aria-hidden="true" />
+            <span className="whitespace-nowrap">사은품 쿠폰 발급</span>
+            <ExternalLink className="size-4 shrink-0" aria-hidden="true" />
+          </a>
+
+          <a
+            href={WELCARE_MALL_SIGNUP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-[18px] border border-[#C0DFAF] bg-[#DDF2D1] px-3 py-2.5 text-sm font-black text-[#264B2D] shadow-soft transition hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#81B96F] min-[360px]:text-[15px]"
+          >
+            <UserRoundPlus className="size-5 shrink-0" aria-hidden="true" />
+            <span className="whitespace-nowrap">웰케어몰 회원가입하기</span>
+            <ExternalLink className="size-4 shrink-0" aria-hidden="true" />
+          </a>
         </div>
 
-        <div className="relative overflow-hidden rounded-[24px] border border-[#E7EEF7] bg-white p-6 shadow-soft">
-          <div className="ml-16 min-h-28 py-1 text-xl font-black leading-relaxed text-[#101D2E]">
-            인섹탈 콤보 안내서를 
-            <br />
-            받으시면
-            <br />
-            웰케어 데일리 5일치
-            <br />
-            체험팩을 드립니다!
-          </div>
+        <div className="completion-reward flex items-start gap-2.5 rounded-[20px] border border-[#E7EEF7] bg-white p-3 shadow-soft">
           <Image
             src="/images/insectal-avatar.png"
             alt=""
-            width={64}
-            height={64}
-            className="absolute left-5 top-5 size-14 rounded-full object-cover"
+            width={32}
+            height={32}
+            className="size-8 shrink-0 rounded-full object-cover"
           />
-          <ShieldCheck
-            className="absolute bottom-5 right-5 size-9 text-[#67A8F2]"
-            aria-hidden="true"
-          />
+          <p className="min-w-0 flex-1 break-keep text-sm font-extrabold leading-[1.5] text-[#101D2E]">
+            사은품으로 웰케어 데일리 5일치 체험팩을 드립니다!
+          </p>
         </div>
 
-        <div className="rounded-[22px] border border-[#E7EEF7] bg-white p-5 shadow-soft">
-          <div className="flex items-center gap-3 border-b border-dashed border-[#D8E2EC] pb-4 text-sm font-bold text-[#4F5F70]">
-            <span className="grid size-8 place-items-center rounded-full bg-[#67A8F2] text-white">
-              <Check className="size-5" strokeWidth={3} aria-hidden="true" />
+        <div className="completion-confirmation rounded-[20px] border border-[#E7EEF7] bg-white p-3 shadow-soft">
+          <div className="flex items-center gap-2.5 text-[13px] font-bold leading-relaxed text-[#4F5F70]">
+            <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#67A8F2] text-white">
+              <Check className="size-4" strokeWidth={3} aria-hidden="true" />
             </span>
-            응답이 정상적으로 제출되었습니다.
-          </div>
-          <div className="flex items-center gap-3 pt-4 text-sm font-bold text-[#4F5F70]">
-            <span className="grid size-8 place-items-center rounded-full bg-[#67A8F2] text-white">
-              <Check className="size-5" strokeWidth={3} aria-hidden="true" />
-            </span>
-            감사합니다.
+            <div className="min-w-0 break-keep">
+              <p>응답이 정상적으로 제출되었습니다.</p>
+              <p>감사합니다.</p>
+            </div>
           </div>
         </div>
 
@@ -70,32 +77,21 @@ export function CompletionScreen({ onReset }: CompletionScreenProps) {
           alt=""
           width={480}
           height={240}
-          className="mx-auto h-auto w-full max-w-[280px] rounded-[18px] object-contain"
+          className="completion-pets mx-auto h-auto w-full max-w-[112px] rounded-[16px] object-contain"
         />
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="completion-benefits grid grid-cols-3 gap-2">
           {benefitCards.map(({ label, Icon }) => (
             <div
               key={label}
-              className="rounded-[20px] border border-[#E7EEF7] bg-white px-2 py-4 text-center shadow-soft"
+              className="rounded-[18px] border border-[#E7EEF7] bg-white px-1.5 py-2.5 text-center shadow-soft"
             >
-              <div className="mx-auto grid size-12 place-items-center rounded-full bg-[#E7F3FF] text-[#4D8CDC]">
-                <Icon className="size-7" aria-hidden="true" />
+              <div className="mx-auto grid size-8 place-items-center rounded-full bg-[#E7F3FF] text-[#4D8CDC]">
+                <Icon className="size-5" aria-hidden="true" />
               </div>
-              <p className="mt-3 text-xs font-black leading-snug text-[#101D2E]">{label}</p>
+              <p className="mt-1.5 whitespace-nowrap text-[11px] font-black leading-snug text-[#101D2E]">{label}</p>
             </div>
           ))}
-        </div>
-
-        <div className="pt-1 text-center">
-          <button
-            type="button"
-            onClick={onReset}
-            className="inline-flex items-center gap-2 rounded-full border border-[#D6E9FF] bg-white px-4 py-2 text-sm font-bold text-[#6B7B8B] shadow-sm transition hover:text-[#4D8CDC]"
-          >
-            <RotateCcw className="size-4" aria-hidden="true" />
-            처음으로 돌아가기
-          </button>
         </div>
       </section>
     </SurveyLayout>

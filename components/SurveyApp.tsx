@@ -1,84 +1,47 @@
 "use client";
 
 import Image from "next/image";
-import { FormEvent, ReactNode, useMemo, useState } from "react";
-import {
-  ArrowRight,
-  Clock3,
-} from "lucide-react";
+import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
+import { ArrowRight, Clock3 } from "lucide-react";
 import { ChoiceButton } from "@/components/ChoiceButton";
 import { CompletionScreen } from "@/components/CompletionScreen";
-import { KakaoChannelScreen } from "@/components/KakaoChannelScreen";
 import { QuestionCard } from "@/components/QuestionCard";
 import { SurveyLayout } from "@/components/SurveyLayout";
 import {
+  getSurveySteps,
   INITIAL_SURVEY_ANSWERS,
-  SURVEY_STEPS,
+  updateSurveyAnswer,
   validateAllAnswers,
   validateStepAnswer,
 } from "@/lib/survey";
-import type { SurveyAnswers, SurveyStepId } from "@/types/survey";
+import type { SurveyAnswers, SurveyStep, SurveyStepId } from "@/types/survey";
 
-const TOTAL_STEPS = SURVEY_STEPS.length;
+const FORM_TITLE = "2026년 11월 메가주 설문조사";
 
 export function SurveyApp() {
   const [answers, setAnswers] = useState<SurveyAnswers>(INITIAL_SURVEY_ANSWERS);
   const [stepIndex, setStepIndex] = useState(0);
   const [hasStarted, setHasStarted] = useState(false);
-  const [showKakaoChannel, setShowKakaoChannel] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [isCompleted, setIsCompleted] = useState(false);
 
-  const currentStep = SURVEY_STEPS[stepIndex];
+  const surveySteps = useMemo(() => getSurveySteps(answers), [answers]);
+  const currentStep = surveySteps[stepIndex];
+  const totalSteps = surveySteps.length;
   const canContinue = useMemo(
     () => validateStepAnswer(currentStep.id, answers),
     [answers, currentStep.id],
   );
-  const isLastStep = stepIndex === TOTAL_STEPS - 1;
+  const isLastStep = stepIndex === surveySteps.length - 1;
+  const progress = Math.round(10 + ((stepIndex + 1) / totalSteps) * 85);
 
-  function updateAnswer<Key extends keyof SurveyAnswers>(key: Key, value: SurveyAnswers[Key]) {
-    setAnswers((current) => ({ ...current, [key]: value }));
-    setSubmitError("");
-  }
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [stepIndex, hasStarted, isCompleted]);
 
-  function updateSingleAnswer(stepId: SurveyStepId, value: string) {
-    if (stepId === "sex") {
-      updateAnswer("sex", value);
-    }
-
-    if (stepId === "ageRange") {
-      updateAnswer("ageRange", value);
-    }
-
-    if (value !== "O" && value !== "X") {
-      return;
-    }
-
-    if (stepId === "currentUse") {
-      updateAnswer("currentUse", value);
-    }
-
-    if (stepId === "inconvenience") {
-      updateAnswer("inconvenience", value);
-    }
-
-    if (stepId === "willingness") {
-      updateAnswer("willingness", value);
-    }
-  }
-
-  function toggleReason(reason: string) {
-    setAnswers((current) => {
-      const exists = current.reasons.includes(reason);
-
-      return {
-        ...current,
-        reasons: exists
-          ? current.reasons.filter((selectedReason) => selectedReason !== reason)
-          : [...current.reasons, reason],
-      };
-    });
+  function updateAnswer(stepId: SurveyStepId, value: string) {
+    setAnswers((current) => updateSurveyAnswer(current, stepId, value));
     setSubmitError("");
   }
 
@@ -136,26 +99,7 @@ export function SurveyApp() {
       return;
     }
 
-    setShowKakaoChannel(true);
-    setSubmitError("");
-  }
-
-  function resetSurvey() {
-    setAnswers(INITIAL_SURVEY_ANSWERS);
-    setStepIndex(0);
-    setSubmitError("");
-    setIsCompleted(false);
-    setHasStarted(false);
-    setShowKakaoChannel(false);
-  }
-
-  function returnToLastQuestion() {
-    if (isSubmitting) {
-      return;
-    }
-
-    setShowKakaoChannel(false);
-    setSubmitError("");
+    await submitSurvey();
   }
 
   if (!hasStarted) {
@@ -163,52 +107,31 @@ export function SurveyApp() {
   }
 
   if (isCompleted) {
-    return <CompletionScreen onReset={resetSurvey} />;
-  }
-
-  if (showKakaoChannel) {
-    return (
-      <KakaoChannelScreen
-        isSubmitting={isSubmitting}
-        submitError={submitError}
-        onBack={returnToLastQuestion}
-        onSubmit={submitSurvey}
-      />
-    );
+    return <CompletionScreen />;
   }
 
   return (
     <SurveyLayout
-      progress={currentStep.progress}
+      progress={progress}
+      title={FORM_TITLE}
+      singleLineTitle
       stepNumber={stepIndex + 1}
-      totalSteps={TOTAL_STEPS}
+      totalSteps={totalSteps}
       showBack={stepIndex > 0}
       onBack={goBack}
     >
-      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-        <QuestionCard question={currentStep.question} subtitle={currentStep.subtitle} />
+      <form onSubmit={handleSubmit} className="mt-4 space-y-3">
+        <QuestionCard
+          question={currentStep.question}
+          highlight={currentStep.highlight}
+          subtitle={currentStep.subtitle}
+        />
 
-        {currentStep.kind === "single" && currentStep.choices ? (
-          <SingleChoiceQuestion
-            stepId={currentStep.id}
-            answers={answers}
-            onSelect={(value) => updateSingleAnswer(currentStep.id, value)}
-          />
-        ) : null}
-
-        {currentStep.kind === "multi" && currentStep.choices ? (
-          <div className="space-y-3">
-            {currentStep.choices.map((choice) => (
-              <ChoiceButton
-                key={choice.value}
-                choice={choice}
-                selected={answers.reasons.includes(choice.value)}
-                multiple
-                onClick={() => toggleReason(choice.value)}
-              />
-            ))}
-          </div>
-        ) : null}
+        <ChoiceQuestion
+          step={currentStep}
+          selectedValue={answers[currentStep.id]}
+          onSelect={(value) => updateAnswer(currentStep.id, value)}
+        />
 
         {submitError ? (
           <div
@@ -219,15 +142,13 @@ export function SurveyApp() {
           </div>
         ) : null}
 
-        <PetPeek />
-
         <button
           type="submit"
           disabled={!canContinue || isSubmitting}
-          className="flex min-h-16 w-full items-center justify-center gap-5 rounded-[22px] bg-[#67A8F2] px-6 text-xl font-black text-white shadow-button transition enabled:hover:-translate-y-0.5 enabled:active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-45"
+          className="flex min-h-[52px] w-full items-center justify-center gap-3 rounded-[18px] bg-[#67A8F2] px-5 text-lg font-black text-white shadow-button transition enabled:hover:-translate-y-0.5 enabled:active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-45"
         >
           <span>{isSubmitting ? "제출 중..." : currentStep.cta ?? "다음"}</span>
-          <ArrowRight className="size-7" aria-hidden="true" />
+          <ArrowRight className="size-6" aria-hidden="true" />
         </button>
       </form>
     </SurveyLayout>
@@ -240,20 +161,20 @@ type IntroScreenProps = {
 
 function IntroScreen({ onStart }: IntroScreenProps) {
   return (
-    <SurveyLayout progress={10} title="우리 아이 구충제, 어떻게 사용하고 계신가요?">
-      <section className="mt-10 space-y-5">
+    <SurveyLayout progress={10} title={FORM_TITLE} singleLineTitle>
+      <section className="mt-5 space-y-4">
         <GuideBubble>
           <span>안녕하세요, 웰케어입니다 :)</span>
-          <span>반려동물 올인원 구충제 사용 경험에 대한 간단한 설문입니다.</span>
+          <span>반려동물 구충제와 유산균 사용 경험에 대한 간단한 설문입니다.</span>
           <span>응답해주신 내용은 제품 및 시장 조사 목적으로만 활용됩니다.</span>
           <span>※ 작성해주신 개인정보는 응답 확인 및 안내 목적으로만 사용됩니다.</span>
         </GuideBubble>
 
-        <GuideBubble compact trailingIcon={<Clock3 className="size-6 text-[#67A8F2]" />}>
+        <GuideBubble compact trailingIcon={<Clock3 className="size-5 text-[#67A8F2]" />}>
           <span>약 1분 정도 걸려요.</span>
         </GuideBubble>
 
-        <div className="mx-auto max-w-[320px] pt-8">
+        <div className="mx-auto max-w-[240px] pt-2">
           <Image
             src="/images/welcare-pets.png"
             alt="하얀 강아지와 크림색 고양이"
@@ -267,10 +188,10 @@ function IntroScreen({ onStart }: IntroScreenProps) {
         <button
           type="button"
           onClick={onStart}
-          className="flex min-h-16 w-full items-center justify-center gap-8 rounded-[22px] bg-[#67A8F2] px-6 text-xl font-black text-white shadow-button transition hover:-translate-y-0.5 active:translate-y-0"
+          className="flex min-h-[52px] w-full items-center justify-center gap-4 rounded-[18px] bg-[#67A8F2] px-5 text-lg font-black text-white shadow-button transition hover:-translate-y-0.5 active:translate-y-0"
         >
           <span>설문 시작하기</span>
-          <ArrowRight className="size-7" aria-hidden="true" />
+          <ArrowRight className="size-6" aria-hidden="true" />
         </button>
       </section>
     </SurveyLayout>
@@ -285,26 +206,26 @@ type GuideBubbleProps = {
 
 function GuideBubble({ children, compact = false, trailingIcon }: GuideBubbleProps) {
   return (
-    <div className="flex gap-3">
-      <div className="mt-2 grid size-12 shrink-0 place-items-center overflow-hidden rounded-full bg-[#E8F4FF]">
+    <div className="flex gap-2">
+      <div className="mt-2 grid size-8 shrink-0 place-items-center overflow-hidden rounded-full bg-[#E8F4FF]">
         <Image
           src="/images/insectal-avatar.png"
           alt=""
-          width={48}
-          height={48}
+          width={32}
+          height={32}
           className="size-full object-cover"
         />
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="mb-2 text-xs font-extrabold text-[#67A9FF]">인섹탈 가이드</div>
+        <div className="mb-1.5 text-[11px] font-extrabold text-[#67A9FF]">인섹탈 가이드</div>
         <div
           className={[
-            "flex items-center gap-5 rounded-[24px] border border-[#E7EEF7] bg-white px-5 text-[#101D2E] shadow-soft",
-            compact ? "min-h-14 py-3 text-base font-extrabold" : "min-h-32 py-5 text-base font-semibold leading-loose",
+            "flex items-center gap-3 rounded-[20px] border border-[#E7EEF7] bg-white px-4 text-[#101D2E] shadow-soft",
+            compact ? "min-h-11 py-2.5 text-sm font-extrabold" : "py-4 text-sm font-semibold leading-relaxed",
           ].join(" ")}
         >
-          <div className={compact ? "" : "flex flex-col"}>{children}</div>
+          <div className={compact ? "break-keep" : "flex flex-col gap-1 break-keep"}>{children}</div>
           {trailingIcon ? <span className="ml-auto shrink-0">{trailingIcon}</span> : null}
         </div>
       </div>
@@ -312,23 +233,17 @@ function GuideBubble({ children, compact = false, trailingIcon }: GuideBubblePro
   );
 }
 
-type SingleChoiceQuestionProps = {
-  stepId: SurveyStepId;
-  answers: SurveyAnswers;
+type ChoiceQuestionProps = {
+  step: SurveyStep;
+  selectedValue: string;
   onSelect: (value: string) => void;
 };
 
-function SingleChoiceQuestion({ stepId, answers, onSelect }: SingleChoiceQuestionProps) {
-  const step = SURVEY_STEPS.find((surveyStep) => surveyStep.id === stepId);
-  const selectedValue = stepId === "reasons" ? "" : answers[stepId];
-  const useTiles = stepId === "currentUse" || stepId === "inconvenience" || stepId === "willingness";
-
-  if (!step?.choices) {
-    return null;
-  }
+function ChoiceQuestion({ step, selectedValue, onSelect }: ChoiceQuestionProps) {
+  const useTiles = step.id === "willingness" || step.id === "probioticWillingness";
 
   return (
-    <div className={useTiles ? "grid grid-cols-2 gap-3" : "space-y-3"}>
+    <div className={useTiles ? "grid grid-cols-3 gap-2" : "space-y-2"}>
       {step.choices.map((choice) => (
         <ChoiceButton
           key={choice.value}
@@ -338,20 +253,6 @@ function SingleChoiceQuestion({ stepId, answers, onSelect }: SingleChoiceQuestio
           onClick={() => onSelect(choice.value)}
         />
       ))}
-    </div>
-  );
-}
-
-function PetPeek() {
-  return (
-    <div className="mx-auto max-w-[220px] pt-1" aria-hidden="true">
-      <Image
-        src="/images/welcare-pets.png"
-        alt=""
-        width={360}
-        height={180}
-        className="h-auto w-full rounded-[18px] object-contain"
-      />
     </div>
   );
 }

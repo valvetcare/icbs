@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "우리 아이 구충제, 어떻게 사용하고 계신가요?",
-  description: "반려동물 올인원 구충제 사용 경험에 대한 간단한 설문입니다.",
+  title: "2026년 11월 메가주 설문조사",
+  description: "반려동물 구충제와 유산균 사용 경험에 대한 간단한 설문입니다.",
 };
 
 export const viewport: Viewport = {

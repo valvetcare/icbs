@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { GoogleFormConfigurationError, submitToGoogleForm } from "@/lib/googleForm";
+import { submitToGoogleForm } from "@/lib/googleForm";
 import { toSurveyAnswers, validateAllAnswers } from "@/lib/survey";
 
 export async function POST(req: Request) {
@@ -28,15 +28,6 @@ export async function POST(req: Request) {
     await submitToGoogleForm(answers);
     return NextResponse.json({ ok: true });
   } catch (error) {
-    if (error instanceof GoogleFormConfigurationError) {
-      console.error(error.message);
-
-      return NextResponse.json(
-        { ok: false, error: error.message },
-        { status: 500 },
-      );
-    }
-
     console.error("Failed to submit Google Form response.", error);
 
     return NextResponse.json(
