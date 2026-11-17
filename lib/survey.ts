@@ -19,7 +19,6 @@ export const PURCHASE_PLACE_OPTIONS = [
   "동물병원",
   "가까운 약국",
   "창고형 약국",
-  "구충제를 사용하지 않음",
 ] as const;
 
 export const WILLINGNESS_OPTIONS = [
@@ -28,58 +27,26 @@ export const WILLINGNESS_OPTIONS = [
   "잘 모르겠음",
 ] as const;
 
-export const PROBIOTIC_USE_OPTIONS = ["O (급여 중)", "X (급여하지 않음)"] as const;
-
-export const PROBIOTIC_TYPE_OPTIONS = [
-  "분말형 (가루)",
-  "정제형 (알약)",
-  "캡슐형",
-  "츄어블형",
-  "액상형",
-  "겔·페이스트형",
-  "X (급여하지 않음)",
-] as const;
-
-const PET_TYPE_STEP: SurveyStep = {
-  id: "petType",
-  question: "1. 현재 어떤 반려동물을 키우고 계신가요?",
-  choices: createChoices(PET_TYPE_OPTIONS),
-};
-
-const DEWORMER_STEPS: SurveyStep[] = [
+const SURVEY_STEPS: SurveyStep[] = [
+  {
+    id: "petType",
+    question: "현재 어떤 반려동물을 키우고 계신가요?",
+    choices: createChoices(PET_TYPE_OPTIONS),
+  },
   {
     id: "productType",
-    question: "2. 현재 어떤 형태의 구충제(심장사상충, 진드기 예방)를 사용하고 계신가요?",
+    question: "현재 어떤 형태의 구충제(심장사상충, 진드기 예방)를 사용하고 계신가요?",
     choices: createChoices(PRODUCT_TYPE_OPTIONS),
   },
   {
     id: "purchasePlace",
-    question: "3. 구충제는 주로 어디에서 구매하시나요?",
+    question: "구충제는 주로 어디에서 구매하시나요?",
     choices: createChoices(PURCHASE_PLACE_OPTIONS),
   },
   {
     id: "willingness",
-    question: "4. 바르는 올인원 구충제 '인섹탈'이 출시되었습니다. 사용해 보실 의향이 있으신가요?",
+    question: "바르는 올인원 구충제 '인섹탈'이 출시되었습니다. 사용해 보실 의향이 있으신가요?",
     highlight: "바르는 올인원 구충제 '인섹탈'",
-    choices: createWillingnessChoices(),
-  },
-];
-
-const PROBIOTIC_STEPS: SurveyStep[] = [
-  {
-    id: "probioticUse",
-    question: "5. 현재 반려동물에게 유산균을 급여하고 계신가요?",
-    choices: createChoices(PROBIOTIC_USE_OPTIONS),
-  },
-  {
-    id: "probioticType",
-    question: "6. 현재 급여 중인 유산균의 제형은 무엇인가요?",
-    choices: createChoices(PROBIOTIC_TYPE_OPTIONS),
-  },
-  {
-    id: "probioticWillingness",
-    question: "7. 가루 날림 없이 급여할 수 있는 겔 제형 유산균이 있다면 사용해 보실 의향이 있으신가요?",
-    highlight: "겔 제형 유산균",
     choices: createWillingnessChoices(),
     cta: "제출하기",
   },
@@ -90,9 +57,6 @@ export const INITIAL_SURVEY_ANSWERS: SurveyAnswers = {
   purchasePlace: "",
   productType: "",
   willingness: "",
-  probioticUse: "",
-  probioticType: "",
-  probioticWillingness: "",
 };
 
 function createChoices(options: readonly string[]): SurveyChoice[] {
@@ -117,14 +81,10 @@ function isOption<T extends string>(value: unknown, options: readonly T[]): valu
   return typeof value === "string" && options.some((option) => option === value);
 }
 
-export function getSurveyBranch(answers: SurveyAnswers) {
-  return answers.petType === "고양이만" ? "probiotic" : "dewormer";
-}
-
 export function getSurveySteps(answers: SurveyAnswers): SurveyStep[] {
-  const dewormerSteps = getSurveyBranch(answers) === "probiotic" ? [] : DEWORMER_STEPS;
-
-  return [PET_TYPE_STEP, ...dewormerSteps, ...PROBIOTIC_STEPS];
+  return SURVEY_STEPS.filter(
+    (step) => step.id !== "purchasePlace" || answers.productType !== "구충제를 사용하지 않음",
+  );
 }
 
 export function updateSurveyAnswer(
@@ -138,12 +98,8 @@ export function updateSurveyAnswer(
     return answers;
   }
 
-  if (stepId === "petType" && isOption(value, PET_TYPE_OPTIONS)) {
-    const nextAnswers = { ...answers, petType: value };
-
-    return getSurveyBranch(answers) !== getSurveyBranch(nextAnswers)
-      ? { ...INITIAL_SURVEY_ANSWERS, petType: value }
-      : nextAnswers;
+  if (stepId === "productType" && value === "구충제를 사용하지 않음") {
+    return { ...answers, productType: value, purchasePlace: "" };
   }
 
   return { ...answers, [stepId]: value };
@@ -179,10 +135,5 @@ export function toSurveyAnswers(body: unknown): SurveyAnswers {
     purchasePlace: isOption(record.purchasePlace, PURCHASE_PLACE_OPTIONS) ? record.purchasePlace : "",
     productType: isOption(record.productType, PRODUCT_TYPE_OPTIONS) ? record.productType : "",
     willingness: isOption(record.willingness, WILLINGNESS_OPTIONS) ? record.willingness : "",
-    probioticUse: isOption(record.probioticUse, PROBIOTIC_USE_OPTIONS) ? record.probioticUse : "",
-    probioticType: isOption(record.probioticType, PROBIOTIC_TYPE_OPTIONS) ? record.probioticType : "",
-    probioticWillingness: isOption(record.probioticWillingness, WILLINGNESS_OPTIONS)
-      ? record.probioticWillingness
-      : "",
   };
 }

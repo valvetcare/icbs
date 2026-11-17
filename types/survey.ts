@@ -10,26 +10,11 @@ export type ProductType =
 
 export type Willingness = "O (사용 의향 있음)" | "X (사용 의향 없음)" | "잘 모르겠음" | "";
 
-export type ProbioticUse = "O (급여 중)" | "X (급여하지 않음)" | "";
-
-export type ProbioticType =
-  | "분말형 (가루)"
-  | "정제형 (알약)"
-  | "캡슐형"
-  | "츄어블형"
-  | "액상형"
-  | "겔·페이스트형"
-  | "X (급여하지 않음)"
-  | "";
-
 export type SurveyAnswers = {
   petType: PetType | "";
   purchasePlace: string;
   productType: ProductType;
   willingness: Willingness;
-  probioticUse: ProbioticUse;
-  probioticType: ProbioticType;
-  probioticWillingness: Willingness;
 };
 
 export type SurveyStepId = keyof SurveyAnswers;

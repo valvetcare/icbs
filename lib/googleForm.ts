@@ -1,4 +1,4 @@
-import { getSurveyBranch, getSurveySteps } from "@/lib/survey";
+import { getSurveySteps } from "@/lib/survey";
 import type { SurveyAnswers, SurveyStepId } from "@/types/survey";
 
 const GOOGLE_FORM_ACTION_URL =
@@ -7,17 +7,16 @@ const GOOGLE_FORM_ACTION_URL =
 const GOOGLE_FORM_ENTRIES = {
   petType: "entry.2116723398",
   purchasePlace: "entry.741415276",
-  productType: "entry.1248074905",
-  willingness: "entry.1368871348",
-  probioticUse: "entry.1015391778",
-  probioticType: "entry.423693412",
-  probioticWillingness: "entry.1668063766",
+  productType: "entry.1685194752",
+  willingness: "entry.421156545",
 } as const satisfies Record<SurveyStepId, string>;
 
 export async function submitToGoogleForm(answers: SurveyAnswers) {
   const formData = new URLSearchParams();
 
-  for (const step of getSurveySteps(answers)) {
+  const steps = getSurveySteps(answers);
+
+  for (const step of steps) {
     const answer = answers[step.id];
     const choice = step.choices.find((candidate) => candidate.value === answer);
 
@@ -31,7 +30,7 @@ export async function submitToGoogleForm(answers: SurveyAnswers) {
   formData.append("fvv", "1");
   formData.append(
     "pageHistory",
-    getSurveyBranch(answers) === "probiotic" ? "0,2" : "0,1,2",
+    steps.some((step) => step.id === "purchasePlace") ? "0,1,2" : "0,2",
   );
 
   const response = await fetch(GOOGLE_FORM_ACTION_URL, {

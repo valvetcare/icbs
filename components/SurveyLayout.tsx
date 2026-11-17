@@ -23,7 +23,7 @@ export function SurveyLayout({
   compactHeader = false,
   subtitle,
   stepNumber,
-  totalSteps = 6,
+  totalSteps = 4,
   showBack = false,
   onBack,
 }: SurveyLayoutProps) {

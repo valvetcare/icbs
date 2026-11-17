@@ -122,7 +122,7 @@ export function SurveyApp() {
     >
       <form onSubmit={handleSubmit} className="mt-4 space-y-3">
         <QuestionCard
-          question={currentStep.question}
+          question={`${stepIndex + 1}. ${currentStep.question}`}
           highlight={currentStep.highlight}
           subtitle={currentStep.subtitle}
         />
@@ -165,7 +165,7 @@ function IntroScreen({ onStart }: IntroScreenProps) {
       <section className="mt-5 space-y-4">
         <GuideBubble>
           <span>안녕하세요, 웰케어입니다 :)</span>
-          <span>반려동물 구충제와 유산균 사용 경험에 대한 간단한 설문입니다.</span>
+          <span>반려동물 구충제 사용 경험에 대한 간단한 설문입니다.</span>
           <span>응답해주신 내용은 제품 및 시장 조사 목적으로만 활용됩니다.</span>
           <span>※ 작성해주신 개인정보는 응답 확인 및 안내 목적으로만 사용됩니다.</span>
         </GuideBubble>
@@ -240,7 +240,7 @@ type ChoiceQuestionProps = {
 };
 
 function ChoiceQuestion({ step, selectedValue, onSelect }: ChoiceQuestionProps) {
-  const useTiles = step.id === "willingness" || step.id === "probioticWillingness";
+  const useTiles = step.id === "willingness";
 
   return (
     <div className={useTiles ? "grid grid-cols-3 gap-2" : "space-y-2"}>
